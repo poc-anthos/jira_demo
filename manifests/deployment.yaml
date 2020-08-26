@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jira
+  labels:
+    app: jira
+spec: 
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jira
+  template:
+    metadata:
+      labels:
+        app: jira
+    spec:
+      initContainers:
+      - name: jsdhomeperms
+        image: busybox
+        command: ["chown", "2001:2001", "-R", "/var/atlassian/application-data/jira/"]
+        volumeMounts:
+        - mountPath: "/var/atlassian/application-data/jira"
+          name: homepath
+      - name: jsdsharedperms
+        image: busybox
+        command: ["chown", "-R", "2001:2001", "/var/atlassian/shared"]
+        volumeMounts:
+          - mountPath: "/var/atlassian/shared"
+            name: sharedpath
+      containers:
+      - image: atlassian/jira-servicedesk:4.7.1
+        name: jira-pod
+        ports:
+        - name: http
+          containerPort: 8080
+        - name: clusterport
+          containerPort: 40001
+        resources:
+          limits:
+            cpu: 2000m
+            memory: 4000Mi
+          requests:
+            cpu: 500m
+            memory: 4000Mi
+        envFrom:
+        - configMapRef:
+            name: jira-config 
+        env:
+        - name: NODE_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: JIRA_NODE_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: EHCACHE_LISTENER_HOSTNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: EHCACHE_LISTENER_PORT
+          value: "40001"
+        volumeMounts:
+        - mountPath: /var/atlassian/shared
+          name: sharedpath
+        - mountPath: /var/atlassian/application-data/jira
+          name: homepath  
+        readinessProbe:
+          httpGet:
+            port: 8080
+            path: /status
+          initialDelaySeconds: 180
+          periodSeconds: 15
+          successThreshold: 2
+          failureThreshold: 2
+          timeoutSeconds: 5 
+      volumes:
+      - name: sharedpath
+        persistentVolumeClaim:
+          claimName: jira-sfs-shared
+      - name: homepath
+        emptyDir: {}

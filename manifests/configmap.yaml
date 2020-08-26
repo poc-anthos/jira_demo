@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jira-config
+  labels:
+    app: jira
+data:
+  CATALINA_CONNECTOR_PROXYNAME: jira-demo.corp.caascad.com
+  CATALINA_CONNECTOR_SCHEME: https
+  CATALINA_CONNECTOR_SECURE: "true"
+  CLUSTERED: "true"
+  JIRA_SHARED_HOME: /var/atlassian/shared
+  EHCACHE_LISTENER_PORT: "40001"
+  ATL_JDBC_URL: jdbc:postgresql://postgres.jira-demo:5432/jira
+  ATL_JDBC_USER: admin
+  ATL_JDBC_PASSWORD: XXXX
+  ATL_DB_DRIVER: org.postgresql.Driver
+  ATL_DB_TYPE: postgres72
