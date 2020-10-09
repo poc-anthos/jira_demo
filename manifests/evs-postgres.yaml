@@ -4,8 +4,8 @@ metadata:
   name: jira-evs-postgres
 spec:
   accessModes:
-  - ReadWriteMany
+  - ReadWriteOnce
   resources:
     requests:
       storage: 10Gi
-  storageClassName: sata
+  storageClassName: csi-disk
